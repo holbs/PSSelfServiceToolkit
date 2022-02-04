@@ -456,7 +456,7 @@ Try {
     $ADUser = $ADSI.FindAll()
     Write-ToConsole -Message "- Welcome $($ADUser.Properties.givenname[0]). Click 'Start Diagnostics' to begin"
 } Catch {
-    Write-ToConsole -Message "- Welcome $env:USERNAME. Click 'Start Diagnostics' to begin"
+    Write-ToConsole -Message "- Welcome $((Get-LocalUser -Name $env:USERNAME).FullName.Split(' ')[0]). Click 'Start Diagnostics' to begin"
 }
 # Add the Diagnostics flag to clear the welcome screen if Clear-Console is called before Start-Diagnostics
 $Script:Diagnostics = $true
