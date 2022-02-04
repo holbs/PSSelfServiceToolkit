@@ -207,7 +207,7 @@ Function Get-KernelUptime {
     Write-Output $UpTime
 }
 Function Restore-NetworkDrives {
-    If (Test-Connection $env:USERDOMAIN -Count 1 -Quiet) {
+    If (Test-Path "$env:USERDOMAIN\NETLOGON") {
         $MappedDrives = Get-MappedNetworkDrives
         If ($MappedDrives) {
             # Foreach drive, check if path can be reached and the use 'net use' to unmap and remap
@@ -348,7 +348,7 @@ $WPFRunIPLease.Add_Click({
 $WPFRunKerberos.Add_Click({
     # Clear Kerberos tokens and then initiate a gpupdate back to the DC to get a new token
     Clear-Console
-    If (Test-Connection $env:USERDOMAIN -Count 1 -Quiet) {
+    If (Test-Path "\\$env:USERDOMAIN\NETLOGON") {
         Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "purge"
         Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpupdate.exe" -ArgumentList "/force"
         Write-ToConsole -Message "- Kerberos tokens refreshed"
