@@ -4,7 +4,6 @@ $ToolSupport     = "heldpesk@contoso.com"
 $ToolVersion     = "00.000"
 $ToolLogLocation = "C:\Support\$ToolName" # Change this based on your environment
 $ToolTicketUrl   = "https://helpdesk.contoso.com"
-$ToolNls         = "nls.contoso.com"
 
 #==========================================================================#
 # Import XAML file and load WPF form                                       #
@@ -96,18 +95,25 @@ Function Start-Diagnostics {
     # Collect some basic information first before then clearing the loading, then writing to $WPFConsole
     $DomainUser = $env:USERDOMAIN.ToUpper() + "\" + $env:USERNAME.ToLower()
     $WindowsVersion = Get-WindowsVersion
-    $OfficeVersion = (Get-ChildItem -Path "$env:ProgramFiles\Microsoft Office\*","${env:ProgramFiles(x86)}\Microsoft Office\*" -Recurse | Where-Object {$_.Name -eq "Outlook.exe"} | Sort-Object -Descending LastWriteTime)[0].VersionInfo.ProductVersion
+    $OfficeVersion = (Get-ChildItem -Path "$env:ProgramFiles\Microsoft Office\*","${env:ProgramFiles(x86)}\Microsoft Office\*" -Recurse | Where-Object {$_.Name -eq "Outlook.exe"} | Sort-Object -Descending LastWriteTime | Select-Object -First 1).VersionInfo.ProductVersion
     $KernelUptime = Get-KernelUptime
-    # Clear Console then write information
     $WPFConsole.Text = $null
+    # Standard computer information - computer name, username, Windows version, Office version etc
     Write-ToConsole -Message "- Computer information"
     Write-ToConsole -Message ""
     Write-ToConsole -Message "ComputerName   : $($env:COMPUTERNAME.ToUpper())"
-    Write-ToConsole -Message "Username       : $($DomainUser)"
-    Write-ToConsole -Message "WindowsVersion : $($WindowsVersion)"
-    Write-ToConsole -Message "OfficeVersion  : $($OfficeVersion)"
-    Write-ToConsole -Message "Uptime         : $($KernelUptime)"
+    Write-ToConsole -Message "Username       : $DomainUser"
+    Write-ToConsole -Message "WindowsVersion : $WindowsVersion"
+    Write-ToConsole -Message "OfficeVersion  : $OfficeVersion"
+    Write-ToConsole -Message "Uptime         : $KernelUptime"
     Write-ToConsole -Message ""
+    # Domain connectivity, if intranet can be reached and what server authenticated the user etc
+    (& $env:WINDIR\System32\query.exe USER) -Split "\n" -Replace "\s{2,}","," | ConvertFrom-Csv | Foreach-Object {
+        If (($_.Username.Trim() -Replace ('>','')) -match $env:USERNAME) {
+            $LogonTimeStamp = $_.'LOGON TIME'
+            $LogonTimeStamp = Get-Date $LogonTimeStamp -format "yyyy-MM-dd HH:mm:ss"
+        }
+    }
     Write-ToConsole -Message "- Domain connectivity"
     Write-ToConsole -Message ""
     Write-ToConsole -Message "Internet       : " -NoNewLine
@@ -117,57 +123,54 @@ Function Start-Diagnostics {
         Write-ToConsole -Message "Not connected"
     }
     Write-ToConsole -Message "Intranet       : " -NoNewLine
-    If (Test-Connection $env:USERDOMAIN -Count 1 -Quiet) {
+    If (Test-Path "\\$env:USERDOMAIN\NETLOGON") {
         Write-ToConsole -Message "OK"
     } Else {
         Write-ToConsole -Message "Not connected"
     }
     Write-ToConsole -Message "LogonServer    : $env:LOGONSERVER"
-    Write-ToConsole -Message "Location       : " -NoNewLine
-    If (Test-Connection $ToolNls -Count 1 -Quiet) {
-        Write-ToConsole -Message "Inside network"
-    } Else {
-        Write-ToConsole -Message "Outside network"
-    }
-    Write-ToConsole -Message ""
-    Write-ToConsole -Message "- Network connectivity"
-    Write-ToConsole -Message ""
-    Get-NetAdapter | Where-Object {$_.Name -eq "Ethernet" -or $_.Name -eq "WiFi" -or $_.Name -eq "DoVPN" -or $_.Name -eq "AoVPN"} | Foreach-Object {
+    Write-ToConsole -Message "LogonTimeStamp : $(If ($LogonTimeStamp) {$LogonTimeStamp} Else {"N/A"})"
+    # Network adapters, connecivity status etc
+    Get-NetAdapter | Where-Object {
+        $_.Name -eq "Ethernet" -or                     # Ethernet adapter
+        $_.Name -like "WiFi" -or                       # WiFi adapter
+        $_.InterfaceDescription -like "*PANGP*" -or    # Global Protect VPN
+        $_.InterfaceDescription -like "*Juniper*"      # Pulse VPN
+    } | Foreach-Object {
+        Write-ToConsole -Message ""
+        Write-ToConsole -Message "- $($_.Name)"
+        Write-ToConsole -Message ""
         If ($_.MediaConnectionState -eq "Disconnected") {
-            Write-ToConsole -Message "$($_.Name) state : $($_.MediaConnectionState)"
+            Write-ToConsole -Message "State          : Disconnected"
         } Elseif ($_.MediaConnectionState -eq "Connected") {
             $NetAdapter = $_
-            Write-ToConsole -Message "$($_.Name) state : $($_.MediaConnectionState)"
             $Connected = (Get-CimInstance Win32_NetworkAdapter | Where-Object {$_.Name -eq $NetAdapter.InterfaceDescription}).TimeOfLastReset
             $Span = New-TimeSpan -Start $Connected -End $ClickTime
             $UpTime = [string]$Span.Days + " Days " + [string]$Span.Hours + " Hours " + [string]$Span.Minutes + " Minutes " + [string]$Span.Seconds + " Seconds"
-            Write-ToConsole -Message "$($_.Name) uptime : $UpTime"
-            Write-ToConsole -Message "$($_.Name) IP address : " -NoNewLine
+            Write-ToConsole -Message "State          : Connected"
+            Write-ToConsole -Message "UpTime         : $UpTime"
+            Write-ToConsole -Message "IP address     : " -NoNewLine
             Write-ToConsole -Message ($_ | Get-NetIPAddress | Where-Object {$_.AddressFamily -eq "IPv4"}).IPAddress
-            Write-ToConsole -Message "$($_.Name) MAC address : $($_.MacAddress)"
+            Write-ToConsole -Message "MAC address    : $($_.MacAddress)"
         }
     }
     Write-ToConsole -Message ""
+    # Mapped network drives. Pulled from the registry so disconnected drives are shown as well. Made into one object then added to the console
     Write-ToConsole -Message "- Network drives"
     Write-ToConsole -Message ""
-    $MappedDrives = (Get-ChildItem -Path "Registry::HKCU\Network").Name.ToUpper()
-    If ($MappedDrives) {
-        $MappedDrives | Foreach-Object {
-            $Drive = $_
-            Write-ToConsole -Message (Get-ItemProperty -Path "REGISTRY::$Drive" | Select-Object @{N='Name';E={"$($_.PSChildName.ToUpper()):\"}}, @{N='Path';E={$_.RemotePath.ToLower()}} | Out-String).Trim()
-        }
+    $NetworkDrives = Get-MappedNetworkDrives
+    If ($NetworkDrives) {
+        Write-ToConsole -Message ($NetworkDrives | Out-String).Trim()
     } Else {
         Write-ToConsole -Message "No network drives mapped"
     }
     Write-ToConsole -Message ""
+    # Mapped \\network\printers. Made into one object then added to the console. Does not include local printers
     Write-ToConsole -Message "- Network printers"
     Write-ToConsole -Message ""
-    $MappedPrinters = (Get-ChildItem -Path "Registry::HKU\Printers\Connections").Name.ToUpper()
-    If ($MappedPrinters) {
-        $MappedPrinters | Foreach-Object {
-            $Printer = $_
-            (Get-ItemProperty -Path "REGISTRY::$Printer" | Select-Object Server, @{N='Printer';E={($_.PSChildName).Split(',')[3]}} | Out-String).Trim()
-        }
+    $NetworkPrinters = Get-MappedNetworkPrinters
+    If ($NetworkPrinters) {
+        Write-ToConsole -Message ($NetworkPrinters | Out-String).Trim()
     } Else {
         Write-ToConsole -Message "No network printers mapped"
     }
@@ -205,16 +208,18 @@ Function Get-KernelUptime {
 }
 Function Restore-NetworkDrives {
     If (Test-Connection $env:USERDOMAIN -Count 1 -Quiet) {
-        $MappedDrives = (Get-ChildItem -Path "Registry::HKCU\Network").Name.ToUpper()
+        $MappedDrives = Get-MappedNetworkDrives
         If ($MappedDrives) {
-            # Foreach drive, use 'net use' to unmap and remap
+            # Foreach drive, check if path can be reached and the use 'net use' to unmap and remap
             $MappedDrives | Foreach-Object {
-                $Drive = $_
-                $WorkingDrive = Get-ItemProperty -Path "REGISTRY::$Drive" | Select-Object @{N='Name';E={$_.PSChildName.ToUpper()}}, @{N='Path';E={$_.RemotePath.ToLower()}}
-                Write-ToConsole -Message "- $($WorkingDrive.Name):\ "
-                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($WorkingDrive.Name): /d" -Wait
-                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($WorkingDrive.Name): \\$($WorkingDrive.Path) /p:y" -Wait
-                Write-ToConsole "restored"
+                If (Test-Path $_.Path) {
+                    Write-ToConsole -Message "- Restoring $($_.Name): " -NoNewLine
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): /d" -Wait
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): \\$($_.Path) /p:y" -Wait
+                    Write-ToConsole "OK"
+                } Else {
+                    Write-ToConsole -Message "- Restoring $($_.Name): Path not reachable. Not restored"
+                }
             }
         } Else {
             Write-ToConsole -Message "- Network drives not restored. No network drives mapped"
@@ -247,6 +252,34 @@ Function Start-NetworkTest {
     Write-Output "C:\Users\$env:USERNAME> $Command" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Invoke-Expression "$env:WINDIR\System32\$CommandExe $CommandArg" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Write-ToConsole -Message "OK"
+}
+Function Get-MappedNetworkDrives {
+    If ((Get-ChildItem -Path "REGISTRY::HKCU\Network")) {
+        (Get-ChildItem -Path "REGISTRY::HKCU\Network").Name | Foreach-Object {
+            $Drive = $_
+            $CurrentDrive = Get-ItemProperty -Path "REGISTRY::$Drive" | Select-Object PSChildName, RemotePath
+            [PSCustomObject]@{
+                Name = $CurrentDrive.PSChildName.ToUpper()
+                Path = $CurrentDrive.RemotePath.ToLower()
+            }
+        }
+    } Else {
+        Return $false
+    }
+}
+Function Get-MappedNetworkPrinters {
+    If ((Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections")) {
+        (Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections").Name | Foreach-Object {
+            $Printer = $_
+            $CurrentPrinter = Get-ItemProperty -Path "REGISTRY::$Printer" | Select-Object Server, PSChildName
+            [PSCustomObject]@{
+                Server = $CurrentPrinter.Server.ToUpper()
+                Printer = $CurrentPrinter.PSChildName.Split(',')[3].ToLower()
+            }
+        }
+    } Else {
+        Return $false
+    }
 }
 
 #==========================================================================#
