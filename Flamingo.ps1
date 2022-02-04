@@ -70,7 +70,7 @@ Function Show-MessageBox {
     [System.Windows.MessageBox]::Show($MessageBoxBody, $MessageBoxTitle, $ButtonType, $MessageIcon)
 }
 Function Start-AsAdministrator {
-    Write-ToConsole -Message "> Restarting $ToolName as administrator"
+    Write-ToConsole -Message "- Restarting $ToolName as administrator"
     $ScriptPath = $($Script:MyInvocation.MyCommand.Path)
     $PowerShell = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$ScriptPath`"" -PassThru
     Start-Sleep -Milliseconds 2000
