@@ -10,7 +10,7 @@ $ToolNls         = "nls.contoso.com"
 # Import XAML file and load WPF form                                       #
 #==========================================================================#
 
-$InputXAML = (Get-Content ".\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion)
+$InputXAML = (Get-Content "$PSScriptRoot\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion)
 $InputXAML = $InputXAML -Replace 'mc:Ignorable="d"','' -Replace "x:N",'N' -replace '^<Win.*','<Window'
 [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
 [xml]$XAML = $InputXAML
@@ -69,6 +69,17 @@ Function Show-MessageBox {
     $MessageBoxBody = $Body
     $MessageIcon = [System.Windows.MessageBoxImage]::$Icon
     [System.Windows.MessageBox]::Show($MessageBoxBody, $MessageBoxTitle, $ButtonType, $MessageIcon)
+}
+Function Start-AsAdministrator {
+    Write-ToConsole -Message "> Restarting $ToolName as administrator"
+    $ScriptPath = $($Script:MyInvocation.MyCommand.Path)
+    $PowerShell = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$ScriptPath`"" -PassThru
+    Start-Sleep -Milliseconds 2000
+    If (Get-Process -Id $PowerShell.Id) {
+        $Form.Close()
+    } Else {
+        Write-ToConsole -Message "- There was a problem starting as administrator"
+    }
 }
 Function Start-Diagnostics {
     $ClickTime = Get-Date
@@ -429,8 +440,7 @@ $WPFHelpAdmin.Add_Click({
     If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
         Write-ToConsole -Message "- Already running as administrator"
     } Else {
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList "$($Script:MyInvocation.MyCommand.Path)"
-        $Form.Close()
+        Start-AsAdministrator
     }
 })
 $WPFHelpAbout.Add_Click({
