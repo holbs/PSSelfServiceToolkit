@@ -249,7 +249,7 @@ Function Start-NetworkTest {
     }
     $CommandArg = ($CommandArg -Join (' ') | Out-String).Trim()
     Write-ToConsole -Message "$($Command): " -NoNewLine
-    Write-Output "C:\Users\$env:USERNAME> $Command" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
+    Write-Output "$env:USERPROFILE> $Command" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Invoke-Expression "$env:WINDIR\System32\$CommandExe $CommandArg" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Write-ToConsole -Message "OK"
 }
@@ -350,8 +350,16 @@ $WPFLinkSupport.Add_Click({
 $WPFRunGpupdate.Add_Click({
     # Start a gpupdate in the background
     Clear-Console
-    $Gpupdate = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpupdate.exe" -ArgumentList "/force" -PassThru
-    Write-ToConsole -Message "- Group Policy Update running (Process Id: $($Gpupdate.Id))"
+    If (Test-Path "\\$env:USERDOMAIN\NETLOGON") {
+        If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "-lh 0 -li 0x3e7 purge" -Wait
+        }
+        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "purge" -Wait
+        $Gpupdate = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpupdate.exe" -ArgumentList "/force" -PassThru
+        Write-ToConsole -Message "- Group Policy Update running (Process Id: $($Gpupdate.Id))"
+    } Else {
+        Write-ToConsole -Message "- Group Policy update not ran. No domain controller detected"
+    }
 })
 $WPFRunFlushDns.Add_Click({
     # Clear the DNS cache
@@ -378,7 +386,10 @@ $WPFRunKerberos.Add_Click({
     # Clear Kerberos tokens and then initiate a gpupdate back to the DC to get a new token
     Clear-Console
     If (Test-Path "\\$env:USERDOMAIN\NETLOGON") {
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "purge"
+        If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "-lh 0 -li 0x3e7 purge" -Wait
+        }
+        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "purge" -Wait
         Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpupdate.exe" -ArgumentList "/force"
         Write-ToConsole -Message "- Kerberos tokens refreshed"
     } Else {
