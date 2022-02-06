@@ -420,11 +420,64 @@ $WPFRunGpresult.Add_Click({
     Write-ToConsole -Message "- Group Policy Report generating (Process Id: $($Gpresult.Id)). This can take some time"
 })
 $WPFRunClearTemp.Add_Click({
-    # Clears %TEMP% locations that the user has access to
+    # Reclaims disk space in a Windows installation
     Clear-Console
-    Write-ToConsole -Message "- Cleaning temporary files: "
+    # Remove temp files (wont be able to remove files that are in use)
+    Write-ToConsole -Message "- Cleaning temporary files: " -NoNewLine
     Get-ChildItem -Path $env:TEMP -Force | Remove-Item -Force -Confirm:$false
     Write-ToConsole -Message "OK"
+    # Remove Windows temp files if running as administrator
+    If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+        Write-ToConsole -Message "- Cleaning Windows temporary files: " -NoNewLine
+        Get-ChildItem -Path "$env:WINDIR\Temp" -Force | Remove-Item -Force -Confirm:$false
+        Write-ToConsole -Message "OK"
+    }
+    # Disable Hibernation (removes hiberfil.sys)
+    Write-ToConsole -Message "- Disable hibernation: " -NoNewLine
+    $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Disable Hibernation?" -Icon "Warning" -Type "YesNo"
+    Switch ($Decision) {
+        'Yes' {
+            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\cmd.exe" -ArgumentList "powercfg.exe /hibernate off"
+            Write-ToConsole -Message "OK"
+        }
+        'No' {
+            Write-ToConsole -Message "No"
+        }
+    }
+    # Clear browser caches - Microsoft Edge, Google Chrome, Mozilla Firefox
+    Write-ToConsole -Message "- Clear Browser cache: " -NoNewLine
+    $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Clear browser caches?" -Icon "Warning" -Type "YesNo"
+    Switch ($Decision) {
+        'Yes' {
+            Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\Cache_Data" -Force | Remove-Item -Force -Confirm:$false
+            Get-ChildItem -Path "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\Cache_Data" -Force | Remove-Item -Force -Confirm:$false
+            Get-ChildItem -Path "$env:LOCALAPPDATA\Mozilla\Firefox\Profiles" -Force | Foreach-Object {
+                Get-ChildItem -Path "$_\Cache2" | Remove-Item -Force -Confirm:$false
+            }
+            Write-ToConsole -Message "OK"
+        }
+        'No' {
+            Write-ToConsole -Message "No"
+        }
+    }
+    If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+        # Use DISM to clear up the Windows image of post-update files / WinSXS folder
+        Write-ToConsole -Message "- Clean Windows image: " -NoNewLine
+        $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Clean Windows image with DISM?" -Icon "Warning" -Type "YesNo"
+        Switch ($Decision) {
+            'Yes' {
+                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup" -Wait
+                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup /ResetBaseCmd" -Wait
+                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /SPSuperseded"
+                Write-ToConsole -Message "OK"
+            }
+            'No' {
+                Write-ToConsole -Message "No"
+            }
+        }        
+        # Start the scheduled task for clean up
+        Start-ScheduledTask -TaskPath "\Microsoft\Windows\Servicing\" -TaskName "StartComponentCleanup"
+    }
 })
 $WPFRunOutlookRefresh.Add_Click({
     # Rebuilds the Outlook profile if Outlook is not open

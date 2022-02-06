@@ -14,19 +14,19 @@
                     <MenuItem Header="Close" x:Name="FileClose"/>
                 </MenuItem>
                 <MenuItem Header="Run">
-                    <MenuItem Header="Group Policy update" x:Name="RunGpupdate"/>
-                    <MenuItem Header="Flush DNS cache" x:Name="RunFlushDns"/>
-                    <MenuItem Header="Refresh IP lease" x:Name="RunIPLease"/>
-                    <MenuItem Header="Renew Kerberos token" x:Name="RunKerberos"/>
-                    <MenuItem Header="Recycle SMS actions" x:Name="RunSmsActions"/>
-                    <MenuItem Header="Restore network drives" x:Name="RunRestoreDrives"/>
-                    <MenuItem Header="Check for updates" x:Name="RunCheckUpdates"/>
-                    <MenuItem Header="Get Group Policy report" x:Name="RunGpresult"/>
-                    <MenuItem Header="Clean temporary files" x:Name="RunClearTemp"/>
-                    <MenuItem Header="Refresh Outlook profile" x:Name="RunOutlookRefresh"/>
-                    <MenuItem Header="Refresh Teams cache" x:Name="RunTeamsRefresh"/>
-                    <MenuItem Header="Clear stored credentials" x:Name="RunClearCreds"/>
-                    <MenuItem Header="Run network tests" x:Name="RunNetworkTests"/>
+                    <MenuItem Header="Group Policy Update" x:Name="RunGpupdate"/>
+                    <MenuItem Header="Flush DNS Cache" x:Name="RunFlushDns"/>
+                    <MenuItem Header="Refresh IP Lease" x:Name="RunIPLease"/>
+                    <MenuItem Header="Renew Kerberos Token" x:Name="RunKerberos"/>
+                    <MenuItem Header="Recycle SMS Actions" x:Name="RunSmsActions"/>
+                    <MenuItem Header="Restore Network Drives" x:Name="RunRestoreDrives"/>
+                    <MenuItem Header="Check For Updates" x:Name="RunCheckUpdates"/>
+                    <MenuItem Header="Get Group Policy Report" x:Name="RunGpresult"/>
+                    <MenuItem Header="Clear Disk Space" x:Name="RunClearDisk"/>
+                    <MenuItem Header="Refresh Outlook Profile" x:Name="RunOutlookRefresh"/>
+                    <MenuItem Header="Refresh Teams Cache" x:Name="RunTeamsRefresh"/>
+                    <MenuItem Header="Clear Stored Credentials" x:Name="RunClearCreds"/>
+                    <MenuItem Header="Run Network Tests" x:Name="RunNetworkTests"/>
                 </MenuItem>
                 <MenuItem Header="Links">
                     <MenuItem Header="Intranet" x:Name="LinkIntranet"/>
@@ -37,7 +37,7 @@
                     <MenuItem Header="Contact Support" x:Name="LinkSupport"/>
                 </MenuItem>
                 <MenuItem Header="Help">
-                    <MenuItem Header="Run as administrator" x:Name="HelpAdmin"/>
+                    <MenuItem Header="Run As Administrator" x:Name="HelpAdmin"/>
                     <MenuItem Header="About" x:Name="HelpAbout"/>
                 </MenuItem>	
             </Menu>
