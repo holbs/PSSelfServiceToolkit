@@ -419,7 +419,7 @@ $WPFRunGpresult.Add_Click({
     $Gpresult = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpresult.exe" -ArgumentList "/h $ToolLogLocation\gpresult.html" -PassThru
     Write-ToConsole -Message "- Group Policy Report generating (Process Id: $($Gpresult.Id)). This can take some time"
 })
-$WPFRunClearTemp.Add_Click({
+$WPFRunClearDisk.Add_Click({
     # Reclaims disk space in a Windows installation
     Clear-Console
     # Remove temp files (wont be able to remove files that are in use)
