@@ -382,20 +382,6 @@ $WPFRunIPLease.Add_Click({
         Write-ToConsole -Message "- IP lease not refreshed. No DHCP server found"
     }
 })
-$WPFRunKerberos.Add_Click({
-    # Clear Kerberos tokens and then initiate a gpupdate back to the DC to get a new token
-    Clear-Console
-    If (Test-Path "\\$env:USERDOMAIN\NETLOGON") {
-        If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
-            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "-lh 0 -li 0x3e7 purge" -Wait
-        }
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\klist.exe" -ArgumentList "purge" -Wait
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpupdate.exe" -ArgumentList "/force"
-        Write-ToConsole -Message "- Kerberos tokens refreshed"
-    } Else {
-        Write-ToConsole -Message "- Kerberos tokens not refreshed. No domain controller detected"
-    }
-})
 $WPFRunSmsActions.Add_Click({
     # Runs the Hardware inventory, Software inventory, Machine policy retrieval, Machine policy evaluation, and Application deployment evaluation configuration manager cycles
     Clear-Console

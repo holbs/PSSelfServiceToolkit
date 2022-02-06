@@ -17,7 +17,6 @@
                     <MenuItem Header="Group Policy Update" x:Name="RunGpupdate"/>
                     <MenuItem Header="Flush DNS Cache" x:Name="RunFlushDns"/>
                     <MenuItem Header="Refresh IP Lease" x:Name="RunIPLease"/>
-                    <MenuItem Header="Renew Kerberos Token" x:Name="RunKerberos"/>
                     <MenuItem Header="Recycle SMS Actions" x:Name="RunSmsActions"/>
                     <MenuItem Header="Restore Network Drives" x:Name="RunRestoreDrives"/>
                     <MenuItem Header="Check For Updates" x:Name="RunCheckUpdates"/>
