@@ -1,4 +1,4 @@
-# A PowerShell form that can be deployed to users workstations to allow them to self heal some basic problems and get reports to assist the helpdesk when logging tickets
+# A set of PowerShell scripts can be deployed to Windows workstations to allow for users to self heal
 $ToolName        = "Flamingo"
 $ToolSupport     = "heldpesk@contoso.com"
 $ToolVersion     = "00.000"
@@ -567,6 +567,7 @@ $WPFHelpAbout.Add_Click({
 # Welcome message                                                          #
 #==========================================================================#
 
+<#
 Try {
     $ADSI = [adsisearcher]"(&(ObjectCategory=Person)(ObjectClass=User)(samaccountname=$env:USERNAME))"
     $ADUser = $ADSI.FindAll()
@@ -576,6 +577,8 @@ Try {
 }
 # Add the Diagnostics flag to clear the welcome screen if Clear-Console is called before Start-Diagnostics
 $Script:Diagnostics = $true
+#>
+Write-ToConsole -Message "- Welcome $((Get-LocalUser -Name $env:USERNAME).FullName.Split(' ')[0]). Click 'Start Diagnostics' to begin"
 
 #==========================================================================#
 # Shows the form                                                           #

@@ -29,7 +29,7 @@
                 </MenuItem>
                 <MenuItem Header="Links">
                     <MenuItem Header="Intranet" x:Name="LinkIntranet"/>
-                    <MenuItem Header="HR" x:Name="LinkHR"/>
+                    <MenuItem Header="HR Portal" x:Name="LinkHR"/>
                     <MenuItem Header="WebApps" x:Name="LinkWebApps"/>
                     <MenuItem Header="Offline Online" x:Name="LinkOffice"/>
                     <MenuItem Header="Outlook Online" x:Name="LinkOutlook"/>
