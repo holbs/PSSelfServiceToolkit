@@ -560,7 +560,7 @@ $WPFHelpAdmin.Add_Click({
     }
 })
 $WPFHelpAbout.Add_Click({
-    Show-MessageBox -Title "About" -Body "$ToolName (v$ToolVersion). Written by Aran Holbrook`n`nLinks:`n`n - https://github.com/holbs`n - https://linkedin.com/in/aranholbrook" -Icon "Information" -Type "OK"
+    Show-MessageBox -Title "About" -Body "$ToolName (v$ToolVersion). A self-healing tool for Windows workstations.`n`nWritten in PowerShell. Source available on GitHub @ https://github.com/holbs/flamingo" -Icon "Information" -Type "OK"
 })
 
 #==========================================================================#
