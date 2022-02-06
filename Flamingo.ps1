@@ -517,6 +517,7 @@ $WPFRunClearCreds.Add_Click({
 })
 $WPFRunNetworkTests.Add_Click({
     # Runs a number of network tests using the Start-NetworkTest function which captures the commands and output in a log - always clear the console and remove the old log
+    $Script:Diagnostics = $true
     If (Test-Path $ToolLogLocation) {
         Remove-Item -Path "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Confirm:$false
     } Else {
