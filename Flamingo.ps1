@@ -435,11 +435,15 @@ $WPFRunOutlookRefresh.Add_Click({
     } Else {
         Write-ToConsole -Message "- Refreshing Outlook profile: " -NoNewLine
         $Version = (Get-ChildItem -Path "$env:ProgramFiles\Microsoft Office\*","${env:ProgramFiles(x86)}\Microsoft Office\*" -Recurse | Where-Object {$_.Name -eq "Outlook.exe"} | Sort-Object -Descending LastWriteTime | Select-Object -First 1).VersionInfo.ProductVersion
-        $Version = $Version.Split('.')[0]
-        $ProfileName = "$env:USERNAME-$(Get-Date -format "yyyyMMddHHmmss")"
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\reg.exe" -ArgumentList "ADD HKCU\SOFTWARE\Microsoft\Office\$Version.0\Outlook\Profiles\$ProfileName /f" -Wait
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\reg.exe" -ArgumentList "ADD HKCU\SOFTWARE\Microsoft\Office\$Version.0\Outlook /v DefaultProfile /t REG_SZ /d $ProfileName /f"
-        Write-ToConsole -Message "OK"
+        If ($Version) {
+            $Version = $Version.Split('.')[0]
+            $ProfileName = "$env:USERNAME-$(Get-Date -format "yyyyMMddHHmmss")"
+            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\reg.exe" -ArgumentList "ADD HKCU\SOFTWARE\Microsoft\Office\$Version.0\Outlook\Profiles\$ProfileName /f" -Wait
+            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\reg.exe" -ArgumentList "ADD HKCU\SOFTWARE\Microsoft\Office\$Version.0\Outlook /v DefaultProfile /t REG_SZ /d $ProfileName /f"
+            Write-ToConsole -Message "OK"
+        } Else {
+            Write-ToConsole -Message "Failed. Could not locate Outlook.exe"
+        }
     }
 })
 $WPFRunTeamsRefresh.Add_Click({
