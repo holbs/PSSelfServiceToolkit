@@ -3,7 +3,7 @@ $ToolName        = "Flamingo"
 $ToolSupport     = "heldpesk@contoso.com"
 $ToolVersion     = "00.000"
 $ToolLogLocation = "C:\Support\$ToolName" # Change this based on your environment
-$ToolTicketUrl   = "https://helpdesk.contoso.com"
+$ToolTicketUrl   = "https://helpdesk.contoso.local/"
 
 #==========================================================================#
 # Import XAML file and load WPF form                                       #
@@ -133,9 +133,9 @@ Function Start-Diagnostics {
     # Network adapters, connecivity status etc
     Get-NetAdapter | Where-Object {
         $_.Name -eq "Ethernet" -or                     # Ethernet adapter
-        $_.Name -like "WiFi" -or                       # WiFi adapter
-        $_.InterfaceDescription -like "*PANGP*" -or    # Global Protect VPN
-        $_.InterfaceDescription -like "*Juniper*"      # Pulse VPN
+        $_.Name -eq "WiFi" -or                         # WiFi adapter
+        $_.InterfaceDescription -like "*PANGP*" -or    # Palto Alto Global Protect VPN
+        $_.InterfaceDescription -like "*Juniper*"      # Pulse Secure VPN
     } | Foreach-Object {
         Write-ToConsole -Message ""
         Write-ToConsole -Message "- $($_.Name)"
@@ -315,6 +315,35 @@ $WPFFileClose.Add_Click({
 })
 
 #==========================================================================#
+# Links menu buttons                                                       #
+#==========================================================================#
+
+$WPFLinkIntranet.Add_Click({
+    # Open Intranet page
+    Start-Process -FilePath "https://intranet.contoso.local/"
+})
+$WPFLinkHR.Add_Click({
+    # Open HR page
+    Start-Process -FilePath "https://hr.contoso.local/"
+})
+$WPFLinkWebApps.Add_Click({
+    # Open WebApps page
+    Start-Process -FilePath "https://webapps.contoso.local/"
+})
+$WPFLinkOffice.Add_Click({
+    # Open Office.com
+    Start-Process -FilePath "https://office.microsoft.com/"
+})
+$WPFLinkOutlook.Add_Click({
+    # Open Outlook Web App
+    Start-Process -FilePath "https://outlook.office365.com/"
+})
+$WPFLinkSupport.Add_Click({
+    # Open ticketing system page
+    Start-Process -FilePath "https://helpdesk.contoso.local/"
+})
+
+#==========================================================================#
 # Run menu buttons                                                         #
 #==========================================================================#
 
@@ -422,7 +451,7 @@ $WPFRunClearCreds.Add_Click({
     Clear-Console
     $ClearCreds = @(
         "cmdkey.exe /list > %TEMP%\List.txt"
-        "findstr.exe target=microsoft %TEMP%\List.txt > %TEMP%\tokensonly.txt"
+        "findstr.exe /i target=microsoft %TEMP%\List.txt > %TEMP%\tokensonly.txt"
         "FOR /F `"tokens=1,2 delims= `" %%G IN (%TEMP%\tokensonly.txt) DO cmdkey.exe /delete:%%H"
         "del %TEMP%\List.txt /s /f /q"
         "del %TEMP%\tokensonly.txt /s /f /q"

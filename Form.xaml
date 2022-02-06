@@ -28,6 +28,14 @@
                     <MenuItem Header="Clear stored credentials" x:Name="RunClearCreds"/>
                     <MenuItem Header="Run network tests" x:Name="RunNetworkTests"/>
                 </MenuItem>
+                <MenuItem Header="Links">
+                    <MenuItem Header="Intranet" x:Name="LinkIntranet"/>
+                    <MenuItem Header="HR" x:Name="LinkHR"/>
+                    <MenuItem Header="WebApps" x:Name="LinkWebApps"/>
+                    <MenuItem Header="Offline Online" x:Name="LinkOffice"/>
+                    <MenuItem Header="Outlook Online" x:Name="LinkOutlook"/>
+                    <MenuItem Header="Contact Support" x:Name="LinkSupport"/>
+                </MenuItem>
                 <MenuItem Header="Help">
                     <MenuItem Header="Run as administrator" x:Name="HelpAdmin"/>
                     <MenuItem Header="About" x:Name="HelpAbout"/>
