@@ -2,14 +2,14 @@
 $ToolName        = "Flamingo"
 $ToolSupport     = "heldpesk@contoso.com"
 $ToolVersion     = "00.000"
-$ToolLogLocation = "C:\Support\$ToolName" # Change this based on your environment
+$ToolLogLocation = "$env:LOCALAPPDATA\$ToolName" # Change this based on your environment
 $ToolTicketUrl   = "https://helpdesk.contoso.local/"
 
 #==========================================================================#
 # Import XAML file and load WPF form                                       #
 #==========================================================================#
 
-$InputXAML = (Get-Content "$PSScriptRoot\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion)
+$InputXAML = (Get-Content "$PSScriptRoot\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion).Replace('$PSScriptRoot',$PSScriptRoot)
 $InputXAML = $InputXAML -Replace 'mc:Ignorable="d"','' -Replace "x:N",'N' -replace '^<Win.*','<Window'
 [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
 [xml]$XAML = $InputXAML
@@ -306,8 +306,8 @@ $WPFFileClip.Add_Click({
     $WPFConsole.Text | Set-Clipboard
 })
 $WPFFileSupport.Add_Click({
-    # Opens the ticketing system web page - can be modified for other methods
-    Start-Process -FilePath "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe" -ArgumentList $ToolTicketUrl
+    # Opens the ticketing system web page - Will accept mailto: links for email
+    Start-Process -FilePath $ToolTicketUrl
 })
 $WPFFileClose.Add_Click({
     # Close the form
@@ -340,7 +340,7 @@ $WPFLinkOutlook.Add_Click({
 })
 $WPFLinkSupport.Add_Click({
     # Open ticketing system page
-    Start-Process -FilePath "https://helpdesk.contoso.local/"
+    Start-Process -FilePath $ToolTicketUrl
 })
 
 #==========================================================================#
