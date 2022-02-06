@@ -382,22 +382,22 @@ $WPFRunIPLease.Add_Click({
         Write-ToConsole -Message "- IP lease not refreshed. No DHCP server found"
     }
 })
-$WPFRunSmsActions.Add_Click({
-    # Runs the Hardware inventory, Software inventory, Machine policy retrieval, Machine policy evaluation, and Application deployment evaluation configuration manager cycles
-    Clear-Console
-    Invoke-ConfigMgrActions
-    Write-ToConsole -Message "- Configuration Manager actions have been recycled. This can take some time"
-})
 $WPFRunRestoreDrives.Add_Click({
     # Finds mapped network drives and unmaps then and remaps them
     Clear-Console
     Restore-NetworkDrives
 })
-$WPFRunCheckUpdates.Add_Click({
+$WPFRunCheckWinUpdates.Add_Click({
     # Runs a check for any updates - Also uses Invoke-ConfigMgrActions function to check for updates
     Clear-Console
     Invoke-ConfigMgrActions
     Write-ToConsole -Message "- Initiated check for updates. This can take some time"
+})
+$WPFRunCheckAppUpdates.Add_Click({
+    # Runs the Hardware inventory, Software inventory, Machine policy retrieval, Machine policy evaluation, and Application deployment evaluation configuration manager cycles
+    Clear-Console
+    Invoke-ConfigMgrActions
+    Write-ToConsole -Message "- Configuration Manager actions have been recycled. This can take some time"
 })
 $WPFRunGpresult.Add_Click({
     # Generates a gpresult report in HTML in the $ToolLogLocation defined at the top of the script

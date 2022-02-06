@@ -17,9 +17,9 @@
                     <MenuItem Header="Group Policy Update" x:Name="RunGpupdate"/>
                     <MenuItem Header="Flush DNS Cache" x:Name="RunFlushDns"/>
                     <MenuItem Header="Refresh IP Lease" x:Name="RunIPLease"/>
-                    <MenuItem Header="Recycle SMS Actions" x:Name="RunSmsActions"/>
                     <MenuItem Header="Restore Network Drives" x:Name="RunRestoreDrives"/>
-                    <MenuItem Header="Check For Updates" x:Name="RunCheckUpdates"/>
+                    <MenuItem Header="Check For Application Updates" x:Name="RunCheckAppUpdates"/>
+                    <MenuItem Header="Check For Windows Updates" x:Name="RunCheckWinUpdates"/>
                     <MenuItem Header="Get Group Policy Report" x:Name="RunGpresult"/>
                     <MenuItem Header="Clear Disk Space" x:Name="RunClearDisk"/>
                     <MenuItem Header="Refresh Outlook Profile" x:Name="RunOutlookRefresh"/>
