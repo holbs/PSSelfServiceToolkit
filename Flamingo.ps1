@@ -1,7 +1,7 @@
 # A set of PowerShell scripts can be deployed to Windows workstations to allow for users to self heal
 $ToolName        = "Flamingo"
 $ToolSupport     = "heldpesk@contoso.com"
-$ToolVersion     = "00.000"
+$ToolVersion     = "01.000"
 $ToolLogLocation = "$env:LOCALAPPDATA\$ToolName" # Change this based on your environment
 $ToolTicketUrl   = "https://helpdesk.contoso.local/"
 
