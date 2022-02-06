@@ -9,7 +9,7 @@ $ToolTicketUrl   = "https://helpdesk.contoso.local/"
 # Import XAML file and load WPF form                                       #
 #==========================================================================#
 
-$InputXAML = (Get-Content "$PSScriptRoot\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion).Replace('$PSScriptRoot',$PSScriptRoot)
+$InputXAML = (Get-Content "$PSScriptRoot\Flamingo.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion).Replace('$PSScriptRoot',$PSScriptRoot)
 $InputXAML = $InputXAML -Replace 'mc:Ignorable="d"','' -Replace "x:N",'N' -replace '^<Win.*','<Window'
 [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
 [xml]$XAML = $InputXAML
