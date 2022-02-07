@@ -70,14 +70,70 @@ Function Show-MessageBox {
     [System.Windows.MessageBox]::Show($MessageBoxBody, $MessageBoxTitle, $ButtonType, $MessageIcon)
 }
 Function Start-AsAdministrator {
-    Write-ToConsole -Message "- Restarting $ToolName as administrator"
     $ScriptPath = $($Script:MyInvocation.MyCommand.Path)
     $PowerShell = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$ScriptPath`"" -PassThru
-    Start-Sleep -Milliseconds 2000
+    Start-Sleep -Milliseconds 1000
     If (Get-Process -Id $PowerShell.Id) {
         $Form.Close()
+        Stop-Process $Pid
     } Else {
-        Write-ToConsole -Message "- There was a problem starting as administrator"
+        Throw "There was a problem starting as administrator"
+    }
+}
+Function Clear-Console {
+    # Function that will clear the console if 'Start-Diagnostics' was the last function to be ran. Used to the console doesn't need to be cleared between each 'Run' function
+    If ($Script:Diagnostics) {
+        $WPFConsole.Text = $null
+        $Script:Diagnostics = $false
+    } Else {
+        # Don't clear the console
+    }
+}
+Function Invoke-ConfigMgrActions {
+    $Actions = <# Hardware inventory #> "001", <# Software inventory #> "002", <# Machine policy retrieval #> "021", <# Machine policy evaluation #> "022", <# Application deployment evaluation #> "121"
+    Foreach ($Action in $Actions) {
+        $ConfigMgrAction = "{00000000-0000-0000-0000-000000000$Action}"
+        Invoke-CimMethod -Namespace "Root\CCM" -Class "SMS_CLIENT" -Name "TriggerSchedule" -Arguments @{sScheduleID = $ConfigMgrAction}
+    }
+}
+Function Get-KernelUptime {
+    $Restarted = (Get-CimInstance -ClassName win32_operatingsystem).LastBootUpTime
+    $Span = New-TimeSpan -Start $Restarted -End (Get-Date)
+    $UpTime = [string]$Span.Days + " Days " + [string]$Span.Hours + " Hours " + [string]$Span.Minutes + " Minutes " + [string]$Span.Seconds + " Seconds"
+    Write-Output $UpTime
+}
+Function Get-WindowsVersion {
+    # This will never match the output from winver.exe as there is no way that I know of to convert the ReleaseID to the version (21H2, 20H2, and so on)
+    $Registry = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+    $WinVer = "Version " + $Registry.ReleaseID + " (OS Build " + $Registry.CurrentBuild + "." + $Registry.UBR + ")"
+    Write-Output $WinVer
+}
+Function Get-MappedNetworkDrives {
+    If ((Get-ChildItem -Path "REGISTRY::HKCU\Network")) {
+        (Get-ChildItem -Path "REGISTRY::HKCU\Network").Name | Foreach-Object {
+            $Drive = $_
+            $CurrentDrive = Get-ItemProperty -Path "REGISTRY::$Drive" | Select-Object PSChildName, RemotePath
+            [PSCustomObject]@{
+                Name = $CurrentDrive.PSChildName.ToUpper()
+                Path = $CurrentDrive.RemotePath.ToLower()
+            }
+        }
+    } Else {
+        Return $false
+    }
+}
+Function Get-MappedNetworkPrinters {
+    If ((Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections")) {
+        (Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections").Name | Foreach-Object {
+            $Printer = $_
+            $CurrentPrinter = Get-ItemProperty -Path "REGISTRY::$Printer" | Select-Object Server, PSChildName
+            [PSCustomObject]@{
+                Server = $CurrentPrinter.Server.ToUpper()
+                Printer = $CurrentPrinter.PSChildName.Split(',')[3].ToLower()
+            }
+        }
+    } Else {
+        Return $false
     }
 }
 Function Start-Diagnostics {
@@ -184,56 +240,6 @@ Function Start-Diagnostics {
         $WPFConsole.Text | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-Diagnostics.log" -Force -Append
     }
 }
-Function Clear-Console {
-    # Function that will clear the console if 'Start-Diagnostics' was the last function to be ran. Used to the console doesn't need to be cleared between each 'Run' function
-    If ($Script:Diagnostics) {
-        $WPFConsole.Text = $null
-        $Script:Diagnostics = $false
-    } Else {
-        # Don't clear the console
-    }
-}
-Function Invoke-ConfigMgrActions {
-    $Actions = <# Hardware inventory #> "001", <# Software inventory #> "002", <# Machine policy retrieval #> "021", <# Machine policy evaluation #> "022", <# Application deployment evaluation #> "121"
-    Foreach ($Action in $Actions) {
-        $ConfigMgrAction = "{00000000-0000-0000-0000-000000000$Action}"
-        Invoke-CimMethod -Namespace "Root\CCM" -Class "SMS_CLIENT" -Name "TriggerSchedule" -Arguments @{sScheduleID = $ConfigMgrAction}
-    }
-}
-Function Get-KernelUptime {
-    $Restarted = (Get-CimInstance -ClassName win32_operatingsystem).LastBootUpTime
-    $Span = New-TimeSpan -Start $Restarted -End (Get-Date)
-    $UpTime = [string]$Span.Days + " Days " + [string]$Span.Hours + " Hours " + [string]$Span.Minutes + " Minutes " + [string]$Span.Seconds + " Seconds"
-    Write-Output $UpTime
-}
-Function Restore-NetworkDrives {
-    If (Test-Path "$env:USERDOMAIN\NETLOGON") {
-        $MappedDrives = Get-MappedNetworkDrives
-        If ($MappedDrives) {
-            # Foreach drive, check if path can be reached and the use 'net use' to unmap and remap
-            $MappedDrives | Foreach-Object {
-                If (Test-Path $_.Path) {
-                    Write-ToConsole -Message "- Restoring $($_.Name): " -NoNewLine
-                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): /d" -Wait
-                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): \\$($_.Path) /p:y" -Wait
-                    Write-ToConsole "OK"
-                } Else {
-                    Write-ToConsole -Message "- Restoring $($_.Name): Path not reachable. Not restored"
-                }
-            }
-        } Else {
-            Write-ToConsole -Message "- Network drives not restored. No network drives mapped"
-        }
-    } Else {
-        Write-ToConsole -Message "- Network drives not restored. Not domain connectivity"
-    }    
-}
-Function Get-WindowsVersion {
-    # This will never match the output from winver.exe as there is no way that I know of to convert the ReleaseID to the version (21H2, 20H2, and so on)
-    $Registry = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
-    $WinVer = "Version " + $Registry.ReleaseID + " (OS Build " + $Registry.CurrentBuild + "." + $Registry.UBR + ")"
-    Write-Output $WinVer
-}
 Function Start-NetworkTest {
     Param (
         [string] $Command
@@ -252,34 +258,6 @@ Function Start-NetworkTest {
     Write-Output "$env:USERPROFILE> $Command" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Invoke-Expression "$env:WINDIR\System32\$CommandExe $CommandArg" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-NetworkTests.log" -Force -Append
     Write-ToConsole -Message "OK"
-}
-Function Get-MappedNetworkDrives {
-    If ((Get-ChildItem -Path "REGISTRY::HKCU\Network")) {
-        (Get-ChildItem -Path "REGISTRY::HKCU\Network").Name | Foreach-Object {
-            $Drive = $_
-            $CurrentDrive = Get-ItemProperty -Path "REGISTRY::$Drive" | Select-Object PSChildName, RemotePath
-            [PSCustomObject]@{
-                Name = $CurrentDrive.PSChildName.ToUpper()
-                Path = $CurrentDrive.RemotePath.ToLower()
-            }
-        }
-    } Else {
-        Return $false
-    }
-}
-Function Get-MappedNetworkPrinters {
-    If ((Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections")) {
-        (Get-ChildItem -Path "REGISTRY::HKCU\Printers\Connections").Name | Foreach-Object {
-            $Printer = $_
-            $CurrentPrinter = Get-ItemProperty -Path "REGISTRY::$Printer" | Select-Object Server, PSChildName
-            [PSCustomObject]@{
-                Server = $CurrentPrinter.Server.ToUpper()
-                Printer = $CurrentPrinter.PSChildName.Split(',')[3].ToLower()
-            }
-        }
-    } Else {
-        Return $false
-    }
 }
 
 #==========================================================================#
@@ -385,7 +363,26 @@ $WPFRunIPLease.Add_Click({
 $WPFRunRestoreDrives.Add_Click({
     # Finds mapped network drives and unmaps then and remaps them
     Clear-Console
-    Restore-NetworkDrives
+    If (Test-Path "$env:USERDOMAIN\NETLOGON") {
+        $MappedDrives = Get-MappedNetworkDrives
+        If ($MappedDrives) {
+            # Foreach drive, check if path can be reached and then use 'net use' to unmap and remap
+            $MappedDrives | Foreach-Object {
+                If (Test-Path $_.Path) {
+                    Write-ToConsole -Message "- Restoring $($_.Name): " -NoNewLine
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): /d" -Wait
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\net.exe" -ArgumentList "use $($_.Name): \\$($_.Path) /p:y" -Wait
+                    Write-ToConsole "OK"
+                } Else {
+                    Write-ToConsole -Message "- Restoring $($_.Name): Path not reachable. Not restored"
+                }
+            }
+        } Else {
+            Write-ToConsole -Message "- Network drives not restored. No network drives mapped"
+        }
+    } Else {
+        Write-ToConsole -Message "- Network drives not restored. Not domain connectivity"
+    }
 })
 $WPFRunCheckWinUpdates.Add_Click({
     # Runs a check for any updates - Also uses Invoke-ConfigMgrActions function to check for updates
@@ -557,7 +554,12 @@ $WPFHelpAdmin.Add_Click({
     If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
         Write-ToConsole -Message "- Already running as administrator"
     } Else {
-        Start-AsAdministrator
+        Write-ToConsole -Message "- Restarting $ToolName as administrator" -NoNewLine
+        Try {
+            Start-AsAdministrator
+        } Catch {
+            Write-ToConsole -Message ": Failed"
+        }
     }
 })
 $WPFHelpAbout.Add_Click({
