@@ -2,6 +2,16 @@
 $ToolName      = "Flamingo"
 $ToolTicketUrl = "https://helpdesk.contoso.local/"
 
+# Create a Start Menu shortcut that opens Flamingo
+$Shell = New-Object -ComObject WScript.Shell
+$Shortcut = $Shell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Flamingo.lnk")
+$Shortcut.TargetPath = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
+$Shortcut.Arguments = "-WindowStyle hidden -NoProfile -ExecutionPolicy bypass -File `"$env:ProgramData\Flamingo\Flamingo.ps1`""
+$Shortcut.WorkingDirectory = "$env:WINDIR\System32\WindowsPowerShell\v1.0\"
+$Shortcut.IconLocation = "$env:ProgramData\Flamingo\Icon.ico,0"
+$Shortcut.Save()
+
+# Create the form for the System Tray icon (also known as NotifyIcon)
 [System.Reflection.Assembly]::LoadWithPartialName('System.Windows.Forms')
 [System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
 [System.Reflection.Assembly]::LoadWithPartialName('System.Drawing')
