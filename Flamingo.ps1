@@ -448,7 +448,7 @@ $WPFRunClearDisk.Add_Click({
         $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Clean Windows image with DISM?" -Icon "Warning" -Type "YesNo"
         Switch ($Decision) {
             'Yes' {
-                Start-Job {
+                Start-Job -ScriptBlock {
                     Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup" -Wait
                     Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup /ResetBaseCmd" -Wait
                     Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /SPSuperseded"
