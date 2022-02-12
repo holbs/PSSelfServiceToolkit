@@ -409,22 +409,21 @@ $WPFRunClearDisk.Add_Click({
     Write-ToConsole -Message "- Cleaning temporary files: " -NoNewLine
     Get-ChildItem -Path $env:TEMP -Force | Remove-Item -Force -Confirm:$false
     Write-ToConsole -Message "OK"
-    # Remove Windows temp files if running as administrator
+    # Remove Windows temp files and disable hibernation (removes hiberfil.sys) if running as administrator
     If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
         Write-ToConsole -Message "- Cleaning Windows temporary files: " -NoNewLine
         Get-ChildItem -Path "$env:WINDIR\Temp" -Force | Remove-Item -Force -Confirm:$false
         Write-ToConsole -Message "OK"
-    }
-    # Disable Hibernation (removes hiberfil.sys)
-    Write-ToConsole -Message "- Disable hibernation: " -NoNewLine
-    $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Disable Hibernation?" -Icon "Warning" -Type "YesNo"
-    Switch ($Decision) {
-        'Yes' {
-            Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\cmd.exe" -ArgumentList "powercfg.exe /hibernate off"
-            Write-ToConsole -Message "OK"
-        }
-        'No' {
-            Write-ToConsole -Message "No"
+        Write-ToConsole -Message "- Disable hibernation: " -NoNewLine
+        $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Disable Hibernation?" -Icon "Warning" -Type "YesNo"
+        Switch ($Decision) {
+            'Yes' {
+                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\cmd.exe" -ArgumentList "powercfg.exe /hibernate off"
+                Write-ToConsole -Message "OK"
+            }
+            'No' {
+                Write-ToConsole -Message "No"
+            }
         }
     }
     # Clear browser caches - Microsoft Edge, Google Chrome, Mozilla Firefox
@@ -449,9 +448,11 @@ $WPFRunClearDisk.Add_Click({
         $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Clean Windows image with DISM?" -Icon "Warning" -Type "YesNo"
         Switch ($Decision) {
             'Yes' {
-                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup" -Wait
-                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup /ResetBaseCmd" -Wait
-                Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /SPSuperseded"
+                Start-Job {
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup" -Wait
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /StartComponentCleanup /ResetBaseCmd" -Wait
+                    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\dism.exe" -ArgumentList "/Online /Cleanup-Image /SPSuperseded"
+                }                
                 Write-ToConsole -Message "OK"
             }
             'No' {
