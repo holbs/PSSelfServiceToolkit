@@ -407,12 +407,12 @@ $WPFRunClearDisk.Add_Click({
     Clear-Console
     # Remove temp files (wont be able to remove files that are in use)
     Write-ToConsole -Message "- Cleaning temporary files: " -NoNewLine
-    Get-ChildItem -Path $env:TEMP -Force | Remove-Item -Force -Confirm:$false
+    Get-ChildItem -Path $env:TEMP -Force | Remove-Item -Recurse -Force -Confirm:$false
     Write-ToConsole -Message "OK"
     # Remove Windows temp files and disable hibernation (removes hiberfil.sys) if running as administrator
     If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
         Write-ToConsole -Message "- Cleaning Windows temporary files: " -NoNewLine
-        Get-ChildItem -Path "$env:WINDIR\Temp" -Force | Remove-Item -Force -Confirm:$false
+        Get-ChildItem -Path "$env:WINDIR\Temp" -Force | Remove-Item -Recurse -Force -Confirm:$false
         Write-ToConsole -Message "OK"
         Write-ToConsole -Message "- Disable hibernation: " -NoNewLine
         $Decision = Show-MessageBox -Title "Clear Disk Space" -Body "Disable Hibernation?" -Icon "Warning" -Type "YesNo"
@@ -434,7 +434,7 @@ $WPFRunClearDisk.Add_Click({
             Get-ChildItem -Path "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Cache\Cache_Data" -Force | Remove-Item -Force -Confirm:$false
             Get-ChildItem -Path "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Cache\Cache_Data" -Force | Remove-Item -Force -Confirm:$false
             Get-ChildItem -Path "$env:LOCALAPPDATA\Mozilla\Firefox\Profiles" -Force | Foreach-Object {
-                Get-ChildItem -Path "$_\Cache2" | Remove-Item -Force -Confirm:$false
+                Get-ChildItem -Path "$_\Cache2" | Remove-Item -Recurse -Force -Confirm:$false
             }
             Write-ToConsole -Message "OK"
         }
