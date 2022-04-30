@@ -103,7 +103,6 @@ Function Get-KernelUptime {
     Write-Output $UpTime
 }
 Function Get-WindowsVersion {
-    # This will never match the output from winver.exe as there is no way that I know of to convert the ReleaseID to the version (21H2, 20H2, and so on)
     $Registry = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
     If ($Registry.ReleaseID -gt 2000) {
         $WinVer = $Registry.DisplayVersion + " (OS Build " + $Registry.CurrentBuild + "." + $Registry.UBR + ")"
