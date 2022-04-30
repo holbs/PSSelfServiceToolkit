@@ -1,14 +1,14 @@
 # A set of PowerShell scripts can be deployed to Windows workstations to allow for users to self heal
-$ToolName      = "Flamingo"
+$ToolName      = "PSSelfServiceToolkit"
 $ToolTicketUrl = "https://helpdesk.contoso.local/"
 
 # Create a Start Menu shortcut that opens Flamingo
 $Shell = New-Object -ComObject WScript.Shell
-$Shortcut = $Shell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Flamingo.lnk")
+$Shortcut = $Shell.CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PSSelfServiceToolkit.lnk")
 $Shortcut.TargetPath = "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe"
-$Shortcut.Arguments = "-WindowStyle hidden -NoProfile -ExecutionPolicy bypass -File `"$env:ProgramData\Flamingo\Flamingo.ps1`""
+$Shortcut.Arguments = "-WindowStyle hidden -NoProfile -ExecutionPolicy bypass -File `"$env:ProgramData\PSSelfServiceToolkit\Form.ps1`""
 $Shortcut.WorkingDirectory = "$env:WINDIR\System32\WindowsPowerShell\v1.0\"
-$Shortcut.IconLocation = "$env:ProgramData\Flamingo\Icon.ico,0"
+$Shortcut.IconLocation = "$env:ProgramData\PSSelfServiceToolkit\Icon.ico,0"
 $Shortcut.Save()
 
 # Create the form for the System Tray icon (also known as NotifyIcon)
@@ -44,14 +44,14 @@ $SysTray.ContextMenu.MenuItems.AddRange($ContextExit)
 $SysTray.Add_Click({     
     If ($_.Button -eq [Windows.Forms.MouseButtons]::Left) {
         # Start Flamingo
-        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$PSScriptRoot\Flamingo.ps1`"" -PassThru
+        Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$PSScriptRoot\Form.ps1`"" -PassThru
     }
 })
 
 # Action for clicking on the Open selection
 $ContextOpen.Add_Click({ 
     # Start Flamingo
-    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$PSScriptRoot\Flamingo.ps1`"" -PassThru
+    Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\WindowsPowerShell\v1.0\powershell.exe" -ArgumentList "-NoProfile -ExecutionPolicy bypass -File `"$PSScriptRoot\Form.ps1`"" -PassThru
 })
 
 # Action for clicking on the Support selection

@@ -1,5 +1,5 @@
 # A set of PowerShell scripts can be deployed to Windows workstations to allow for users to self heal
-$ToolName        = "Flamingo"
+$ToolName        = "PSSelfServiceToolkit"
 $ToolSupport     = "heldpesk@contoso.com"
 $ToolVersion     = "1.0"
 $ToolLogLocation = "$env:LOCALAPPDATA\$ToolName" # Change this based on your environment
@@ -9,7 +9,7 @@ $ToolTicketUrl   = "https://helpdesk.contoso.local/"
 # Import XAML file and load WPF form                                       #
 #==========================================================================#
 
-$InputXAML = (Get-Content "$PSScriptRoot\Flamingo.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion).Replace('$PSScriptRoot',$PSScriptRoot)
+$InputXAML = (Get-Content "$PSScriptRoot\Form.xaml" -Raw).Replace('$ToolName',$ToolName).Replace('$ToolSupport',$ToolSupport).Replace('$ToolVersion',$ToolVersion).Replace('$PSScriptRoot',$PSScriptRoot)
 $InputXAML = $InputXAML -Replace 'mc:Ignorable="d"','' -Replace "x:N",'N' -replace '^<Win.*','<Window'
 [void][System.Reflection.Assembly]::LoadWithPartialName('PresentationFramework')
 [xml]$XAML = $InputXAML
@@ -564,7 +564,7 @@ $WPFHelpAdmin.Add_Click({
     }
 })
 $WPFHelpAbout.Add_Click({
-    Show-MessageBox -Title "About" -Body "$ToolName (v$ToolVersion). A self-healing tool for Windows workstations.`n`nWritten in PowerShell. Source available on GitHub @ https://github.com/holbs/flamingo" -Icon "Information" -Type "OK"
+    Show-MessageBox -Title "About" -Body "$ToolName (v$ToolVersion). A self-healing tool for Windows workstations.`n`nWritten in PowerShell. Source available on GitHub @ https://github.com/holbs/PSSelfServiceToolkit" -Icon "Information" -Type "OK"
 })
 
 #==========================================================================#
