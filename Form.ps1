@@ -1,7 +1,7 @@
 # A set of PowerShell scripts can be deployed to Windows workstations to allow for users to self heal
 $ToolName        = "PSSelfServiceToolkit"
 $ToolSupport     = "heldpesk@contoso.com"
-$ToolVersion     = "1.0"
+$ToolVersion     = "RC01"
 $ToolLogLocation = "$env:LOCALAPPDATA\$ToolName" # Change this based on your environment
 $ToolTicketUrl   = "https://helpdesk.contoso.local/"
 
@@ -168,7 +168,7 @@ Function Start-Diagnostics {
     Write-ToConsole -Message ""
     # Domain connectivity, if intranet can be reached and what server authenticated the user etc
     (& $env:WINDIR\System32\query.exe USER) -Split "\n" -Replace "\s{2,}","," | ConvertFrom-Csv | Foreach-Object {
-        If (($_.Username.Trim() -Replace ('>','')) -match $env:USERNAME) {
+        If (($_.Username.Trim() -Replace ('>','')) -Match $env:USERNAME) {
             $LogonTimeStamp = $_.'LOGON TIME'
             $LogonTimeStamp = Get-Date $LogonTimeStamp -format "yyyy-MM-dd HH:mm:ss"
         }
