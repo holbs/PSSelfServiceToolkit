@@ -286,6 +286,10 @@ $WPFFileClip.Add_Click({
     # Copy the contents of $WPFConsole to the clipboard
     $WPFConsole.Text | Set-Clipboard
 })
+$WPFFileLogs.Add_Click({
+    # Open the log directory
+    Invoke-Item $ToolLogLocation
+})
 $WPFFileSupport.Add_Click({
     # Opens the ticketing system web page - Will accept mailto: links for email
     Start-Process -FilePath $ToolTicketUrl
@@ -402,7 +406,20 @@ $WPFRunCheckAppUpdates.Add_Click({
 $WPFRunGpresult.Add_Click({
     # Generates a gpresult report in HTML in the $ToolLogLocation defined at the top of the script
     Clear-Console
-    $Gpresult = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpresult.exe" -ArgumentList "/h $ToolLogLocation\gpresult.html" -PassThru
+    If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+        # If running as administrator get the gpresult for the logged on user
+        $LoggedOnUser = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Username
+        If ($LoggedOnUser.Count -eq 1) {
+            $LoggedOnUser = $LoggedOnUser -Replace ("$env:USERDOMAIN","") -Replace ('\\','')
+            $Gpresult = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpresult.exe" -ArgumentList "/user $LoggedOnUser /h $ToolLogLocation\gpresult.html" -PassThru
+        } Else {
+            # Unable to determine the logged on user so just get computer results
+            $Gpresult = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpresult.exe" -ArgumentList "/scope Computer /h $ToolLogLocation\gpresult.html" -PassThru
+        }
+    } Else {
+        # Not running as admin so just get gpresult from the user who has initiated
+        $Gpresult = Start-Process -WindowStyle hidden -FilePath "$env:WINDIR\System32\gpresult.exe" -ArgumentList "/user $env:USERNAME /h $ToolLogLocation\gpresult.html" -PassThru
+    }    
     Write-ToConsole -Message "- Group Policy Report generating (Process Id: $($Gpresult.Id)). This can take some time"
 })
 $WPFRunClearDisk.Add_Click({
@@ -567,7 +584,7 @@ $WPFHelpAdmin.Add_Click({
     }
 })
 $WPFHelpAbout.Add_Click({
-    Show-MessageBox -Title "About" -Body "$ToolName (v$ToolVersion). A self-healing tool for Windows workstations.`n`nWritten in PowerShell. Source available on GitHub @ https://github.com/holbs/PSSelfServiceToolkit" -Icon "Information" -Type "OK"
+    Show-MessageBox -Title "About" -Body "$ToolName ($ToolVersion). A self-healing tool for Windows workstations.`n`nWritten in PowerShell. Source available on GitHub @ https://github.com/holbs/PSSelfServiceToolkit" -Icon "Information" -Type "OK"
 })
 
 #==========================================================================#

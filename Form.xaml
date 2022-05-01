@@ -10,6 +10,7 @@
                 <MenuItem Header="File">
                     <MenuItem Header="Refresh" x:Name="FileRefresh"/>
                     <MenuItem Header="Clipboard" x:Name="FileClip"/>
+                    <MenuItem Header="Logs" x:Name="FileLogs"/>
                     <MenuItem Header="Contact Support" x:Name="FileSupport"/>
                     <MenuItem Header="Close" x:Name="FileClose"/>
                 </MenuItem>
@@ -31,7 +32,7 @@
                     <MenuItem Header="Intranet" x:Name="LinkIntranet"/>
                     <MenuItem Header="HR Portal" x:Name="LinkHR"/>
                     <MenuItem Header="WebApps" x:Name="LinkWebApps"/>
-                    <MenuItem Header="Offline Online" x:Name="LinkOffice"/>
+                    <MenuItem Header="Office Online" x:Name="LinkOffice"/>
                     <MenuItem Header="Outlook Online" x:Name="LinkOutlook"/>
                     <MenuItem Header="Contact Support" x:Name="LinkSupport"/>
                 </MenuItem>
