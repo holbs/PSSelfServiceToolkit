@@ -431,6 +431,32 @@ $WPFRunGpresult.Add_Click({
     }    
     Write-ToConsole -Message "- Group Policy Report generating (Process Id: $($Gpresult.Id)). This can take some time"
 })
+$WPFRunGroupMembership.Add_Click({
+    # Generates a list of security group memberships for the logged in user
+    Clear-Console
+    If (([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]"Administrator")) {
+        # If running as administrator check if the logged in user and the user running PowerShell are the same
+        $LoggedOnUser = Get-CimInstance -ClassName Win32_ComputerSystem | Select-Object -ExpandProperty Username
+        $PSProcess = Get-CimInstance -Class win32_process -Filter "ProcessID = '$pid'"
+        $PSProcessOwner = Invoke-CimMethod -InputObject $PSProcess -MethodName GetOwner
+        $PSProcessOwner = $PSProcessOwner.Domain + "\" + $PSProcessOwner.User
+        If ($LoggedOnUser -eq $PSProcessOwner) {
+            $GroupMembership = & $env:SYSTEMROOT\System32\whoami.exe /groups /FO CSV
+            $GroupMembership = $GroupMembership | ConvertFrom-Csv
+        } Else {
+            Write-ToConsole -Message "Unable to collect group membership for logged on user while elevated to administrator"
+        }
+    } Else {
+        # Not running as administrator so display group membership for the user running PowerShell
+        $GroupMembership = & $env:SYSTEMROOT\System32\whoami.exe /groups /FO CSV
+        $GroupMembership = $GroupMembership | ConvertFrom-Csv
+    }
+    Write-ToConsole -Message "- Security Group Membership"
+    Write-ToConsole -Message ""
+    $GroupMembership | Foreach-Object {
+        Write-ToConsole -Message $_.'Group Name'
+    }
+})
 $WPFRunClearDisk.Add_Click({
     # Reclaims disk space in a Windows installation
     Clear-Console

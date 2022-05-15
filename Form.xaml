@@ -22,6 +22,7 @@
                     <MenuItem Header="Check For Application Updates" x:Name="RunCheckAppUpdates"/>
                     <MenuItem Header="Check For Windows Updates" x:Name="RunCheckWinUpdates"/>
                     <MenuItem Header="Get Group Policy Report" x:Name="RunGpresult"/>
+                    <MenuItem Header="Get Security Group Membership" x:Name="RunGroupMembership"/>
                     <MenuItem Header="Clear Disk Space" x:Name="RunClearDisk"/>
                     <MenuItem Header="Refresh Outlook Profile" x:Name="RunOutlookRefresh"/>
                     <MenuItem Header="Refresh Teams Cache" x:Name="RunTeamsRefresh"/>
