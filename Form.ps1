@@ -233,6 +233,15 @@ Function Start-Diagnostics {
     } Else {
         Write-ToConsole -Message "No network printers mapped"
     }
+    Write-ToConsole -Message ""
+    # Security group membership. Listed as CSV with whoami.exe and then displayed in the console window
+    Write-ToConsole -Message "- Security group membership"
+    Write-ToConsole -Message ""
+    $GroupMembership = & $env:SYSTEMROOT\System32\whoami.exe /groups /FO CSV
+    $GroupMembership = $GroupMembership | ConvertFrom-Csv
+    $GroupMembership | Foreach-Object {
+        Write-ToConsole -Message $_.'Group Name'
+    }
     # Now note the output in a log file
     If (Test-Path $ToolLogLocation) {
         Write-Output "=============== $(Get-Date $ClickTime -format "yyyy-MM-dd") ===============" | Out-File -FilePath "$ToolLogLocation\$(Get-Date -format "yyyy-MM-dd")-$env:USERNAME-Diagnostics.log" -Force -Append
